@@ -1,9 +1,5 @@
-# des.py - simple DES (64-bit block, 16 rounds) and ECB mode, no libraries
-
-# Shared static 64-bit key (same on client and server)
 KEY = "133457799BBCDFF1"
 
-# ----------------------------- DES tables -----------------------------
 IP = [58, 50, 42, 34, 26, 18, 10, 2, 60, 52, 44, 36, 28, 20, 12, 4,
       62, 54, 46, 38, 30, 22, 14, 6, 64, 56, 48, 40, 32, 24, 16, 8,
       57, 49, 41, 33, 25, 17, 9, 1, 59, 51, 43, 35, 27, 19, 11, 3,
@@ -69,7 +65,6 @@ S_BOX = [
      [2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11]]]
 
 
-# ----------------------------- helpers -----------------------------
 def hex_to_bin(h):
     return bin(int(h, 16))[2:].zfill(len(h) * 4)
 
@@ -90,22 +85,20 @@ def shift_left(bits, n):
     return bits[n:] + bits[:n]
 
 
-# ----------------------------- key schedule -----------------------------
 def make_round_keys(key_hex):
-    key = permute(hex_to_bin(key_hex), PC1)      # 64 -> 56 bits
+    key = permute(hex_to_bin(key_hex), PC1)      
     C, D = key[:28], key[28:]
     keys = []
     for s in SHIFTS:
         C, D = shift_left(C, s), shift_left(D, s)
-        keys.append(permute(C + D, PC2))         # 56 -> 48 bits
+        keys.append(permute(C + D, PC2))         
     return keys
 
 
-# ----------------------------- round function -----------------------------
 def f(R, K):
-    x = xor(permute(R, E), K)                    # expand 32->48, XOR key
+    x = xor(permute(R, E), K)                    
     out = ""
-    for i in range(8):                           # 8 S-boxes: 6 bits -> 4 bits
+    for i in range(8):                           
         block = x[i * 6:(i + 1) * 6]
         row = int(block[0] + block[5], 2)
         col = int(block[1:5], 2)
@@ -113,7 +106,6 @@ def f(R, K):
     return permute(out, P)
 
 
-# ----------------------------- one 64-bit block -----------------------------
 def des_block(block_hex, keys, show=False):
     bits = permute(hex_to_bin(block_hex), IP)
     L, R = bits[:32], bits[32:]
@@ -121,31 +113,28 @@ def des_block(block_hex, keys, show=False):
         L, R = R, xor(L, f(R, keys[i]))
         if show and i == 0:
             print("  Round 1:  L1 =", bin_to_hex(L), " R1 =", bin_to_hex(R))
-    return bin_to_hex(permute(R + L, IP_INV))   # swap + IP^-1
+    return bin_to_hex(permute(R + L, IP_INV))   
 
 
-# ----------------------------- ECB mode -----------------------------
 def encrypt(plain_hex, key_hex=KEY, show=False):
-    # padding: add n bytes of value n so the length is a multiple of 8 bytes
     n = 8 - (len(plain_hex) // 2) % 8
     plain_hex += ("%02X" % n) * n
     keys = make_round_keys(key_hex)
     cipher = ""
-    for i in range(0, len(plain_hex), 16):       # 16 hex chars = 8 bytes
+    for i in range(0, len(plain_hex), 16):       
         cipher += des_block(plain_hex[i:i + 16], keys, show)
     return cipher
 
 
 def decrypt(cipher_hex, key_hex=KEY):
-    keys = make_round_keys(key_hex)[::-1]         # same steps, keys reversed
+    keys = make_round_keys(key_hex)[::-1]         
     plain = ""
     for i in range(0, len(cipher_hex), 16):
         plain += des_block(cipher_hex[i:i + 16], keys)
-    n = int(plain[-2:], 16)                       # remove padding
+    n = int(plain[-2:], 16)                       
     return plain[:-n * 2]
 
 
-# text <-> hex
 def text_to_hex(text):
     return text.encode().hex().upper()
 
@@ -155,6 +144,5 @@ def hex_to_text(h):
 
 
 if __name__ == "__main__":
-    # test with the manual example from the report
     c = des_block("0123456789ABCDEF", make_round_keys(KEY), show=True)
     print("  Ciphertext:", c, "(expected 85E813540F0AB405)")

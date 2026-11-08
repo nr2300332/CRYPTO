@@ -1,9 +1,8 @@
-# server.py - Legacy Bank mainframe: receive, decrypt and print the transaction
 import socket
 from DES import KEY, decrypt, hex_to_text
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # allow quick restart
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  
 server.bind(("127.0.0.1", 5000))
 server.listen(1)
 print("Server is waiting on port 5000 ...")
