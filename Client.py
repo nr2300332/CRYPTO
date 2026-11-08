@@ -4,7 +4,6 @@ from DES import KEY, encrypt, text_to_hex
 message = "Transfer 1500 EGP from 1001 to 4455"
 plain_hex = text_to_hex(message)
 
-
 print("Key:               ", KEY)
 print("Plaintext (hex):   ", plain_hex)
 
